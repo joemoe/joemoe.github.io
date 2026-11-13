@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>joemoe</title>
 <meta name="description" content="johannes moser. the joe state of mind.">
+<link rel="icon" id="fav" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
 <style>
@@ -90,7 +91,7 @@ const UNITS = {
   sport:  { label:'motion',              sub:'cf · running · ski',      prop:'band' },
 };
 // "the foot of one becomes the hand of the other"
-const LINKS = [ ['sail','footR','invest','handL'], ['music','handR','tree','handL'], ['tree','handR','di','footL'], ['di','handR','sport','footL'] ];
+const LINKS = [ ['sail','footR','invest','handL'], ['music','handR','tree','handL'], ['di','handR','sport','footL'] ];
 const IDEAS = [
   { near:['sail'],           t:'wind as data', body:'windshift: live wind for the eastern part of lake constance.', link:'https://joemoe.at/windshift', lt:'open windshift' },
   { near:['invest','code'],  t:'transhumanism, revisited', body:'in 2019 i wrote about the real dangers of transhumanism. in 2026 i invest in companies meant to prevent them. to be continued.' },
@@ -185,6 +186,8 @@ function build(seed){
     [...(labels||[]),...(ideaEls||[]),...(fossilEls||[])].forEach(l=>l.el.remove())}
   world=new THREE.Group();S.add(world);eyes=[];heads=[];labels=[];ideaEls=[];fossilEls=[];clickables=[];anim=[];shards=[];state='hang';reveal.classList.remove('on');card.classList.remove('on');
   P=makePalette();
+  {const sv=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='20,6 40,4 56,16 60,36 50,54 30,60 12,52 4,32 8,14' fill='${P.css[0]}'/><polygon points='20,6 40,4 30,22' fill='#000' opacity='.12'/><polygon points='4,32 12,52 22,40' fill='#000' opacity='.18'/><polygon points='56,16 60,36 44,28' fill='#fff' opacity='.18'/><circle cx='32' cy='30' r='15' fill='#fff' stroke='#141414' stroke-width='3'/><circle cx='36' cy='31' r='7' fill='#141414'/><rect x='44' y='46' width='14' height='14' fill='${P.css[1]}' stroke='#141414' stroke-width='3'/></svg>`;
+   document.getElementById('fav').href='data:image/svg+xml,'+encodeURIComponent(sv)}
   const root=document.documentElement.style;root.setProperty('--paper',P.paper);root.setProperty('--a1',P.css[0]);root.setProperty('--a2',P.css[1]);root.setProperty('--a3',P.css[2]);
   cam.position.copy(CAM);cam.lookAt(0,3.5,0);cam.updateMatrixWorld();
   const asp=cam.aspect, portrait=asp<1;
@@ -228,6 +231,37 @@ function build(seed){
     let li=(Math.random()*L.length)|0,ci=0,pause=0;
     setInterval(()=>{if(pause>0){pause--;return}const l=L[li];if(ci<=l.length){vibe.txt.textContent=l.slice(0,ci++)}else{pause=18;ci=0;li=(li+1+((Math.random()*(L.length-1))|0))%L.length}},70)}
   vibe.obj=parts.code.head;
+
+  // ── stranger connections, re-paired every time: nose → hole in head, fused buttocks, a shared heart
+  {const cand=Object.keys(parts);let pr;
+   for(let k=0;k<50;k++){const a=[...cand];for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}
+     pr=[[a[0],a[1]],[a[2],a[3]],[a[4],a[5]]];if(!pr.some(([x,y])=>parts[x].group===parts[y].group))break}
+   const dirW=(p,v)=>v.clone().transformDirection(p.group.matrixWorld);
+   const bend=(a,b,amt)=>{const m=a.clone().add(b).multiplyScalar(.5);return m.add(V(R(-1,1),R(-.2,1),R(-1,1)).multiplyScalar(a.distanceTo(b)*amt))};
+   // 1) the long nose of A grows into a hole in B's head
+   {const A=parts[pr[0][0]],B=parts[pr[0][1]],sA=A.group.scale.x,sB=B.group.scale.x;
+    const hl=A.head.position,ns=W(A,V(hl.x,hl.y-.12,hl.z+.5)),fw=dirW(A,V(0,0,1));
+    const hb=B.head.getWorldPosition(V(0,0,0)),d=ns.clone().sub(hb).normalize(),en=hb.clone().addScaledVector(d,.6*sB*.95);
+    const pts=[ns,ns.clone().addScaledVector(fw,.9*sA),bend(ns,en,.25),en.clone().addScaledVector(d,.9*sB),en.clone().addScaledVector(d,-.15*sB)];
+    limb(world,pts,A.color,A.color,.15*Math.min(sA,1.4));
+    const tip=blob(.14*sA,A.color,0,.1);tip.position.copy(ns);world.add(tip);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(.26*sB,.08*sB,4,9),mat(INK));rim.position.copy(en);rim.lookAt(en.clone().add(d));world.add(rim);
+    const hole=new THREE.Mesh(new THREE.CircleGeometry(.26*sB,9),new THREE.MeshBasicMaterial({color:0x000000}));hole.position.copy(en).addScaledVector(d,-.02*sB);hole.lookAt(en.clone().add(d));world.add(hole)}
+   // 2) two long buttocks, grown together
+   {const A=parts[pr[1][0]],B=parts[pr[1][1]],sA=A.group.scale.x,sB=B.group.scale.x,ox=p=>p.A.handL.base.x+.6;
+    const bA=dirW(A,V(0,0,-1)),bB=dirW(B,V(0,0,-1)),mid=bend(W(A,V(ox(A),.1,-.6)),W(B,V(ox(B),.1,-.6)),.3);
+    for(const sd of[-1,1]){const pa=W(A,V(ox(A)+sd*.24,.1,-.55)),pb=W(B,V(ox(B)-sd*.24,.1,-.55));
+      for(const [P_,s_] of [[A,sA],[B,sB]]){const ch=blob(.36,P_.color,1,.12);ch.position.set(ox(P_)+(P_===A?sd:-sd)*.24,.1,-.5);ch.scale.set(1,1.1,1.1);P_.group.add(ch)}
+      limb(world,[pa,pa.clone().addScaledVector(bA,1.1*sA),mid.clone().add(V(sd*.28*Math.min(sA,sB),0,0)),pb.clone().addScaledVector(bB,1.1*sB),pb],A.color,B.color,.27*Math.min(sA,sB))}}
+   // 3) one heart for two
+   {const A=parts[pr[2][0]],B=parts[pr[2][1]],sA=A.group.scale.x,sB=B.group.scale.x,ox=p=>p.A.handL.base.x+.6,s=Math.min(sA,sB);
+    const ca=W(A,V(ox(A),1.0,.45)),cb=W(B,V(ox(B),1.0,.45)),hp=bend(ca,cb,.2).add(V(0,.6*s,0));
+    const red=0xe8213a,h=new THREE.Group();for(const sd of[-1,1]){const l=blob(.33,red,1,.1);l.position.set(sd*.22,.12,0);h.add(l)}
+    const tip=new THREE.Mesh(jitter(new THREE.ConeGeometry(.5,.75,7),.08),mat(red));tip.rotation.z=Math.PI;tip.position.y=-.32;h.add(tip);
+    h.position.copy(hp);h.scale.setScalar(s*1.5);world.add(h);
+    for(const [P_,c,sc_] of [[A,ca,sA],[B,cb,sB]]){const n=dirW(P_,V(0,0,1));limb(world,[c,c.clone().addScaledVector(n,.7*sc_),bend(c,hp,.15),hp],P_.color,red,.08*sc_)}
+    anim.push(t=>{const b=Math.pow(Math.max(0,Math.sin(t*5)),12)+.5*Math.pow(Math.max(0,Math.sin(t*5-.6)),12);h.scale.setScalar(s*1.5*(1+.14*b));h.rotation.y=Math.sin(t*.7)*.4})}
+  }
   // labels for figures
   for(const k of Object.keys(parts)){const p=parts[k];if(p.group===gG)continue;const el=mkLabel('label',`<b>${p.u.label}</b><span>${p.u.sub}</span>`);labels.push({el,obj:p.head,dy:.95+(p.u.prop==='tree'?.8:p.u.prop==='tophat'||p.u.prop==='bulb'?.4:0),sx:p.sideX||0})}
 
