@@ -44,12 +44,16 @@ button.re{color:#fff;background:var(--ink)}
 .card .go{display:inline-block;margin-top:10px;padding:5px 10px 4px;background:var(--ink);color:var(--a2);text-decoration:none;font-weight:800;text-transform:uppercase;font-size:15px}
 .card .ls{list-style:none;margin-top:10px;font-size:16px;line-height:1.5}.card .ls a{color:var(--ink);text-decoration-color:var(--a3);text-decoration-thickness:2px}
 .card small{display:block;margin-top:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8a8478}
+.vibe{position:fixed;left:0;top:0;pointer-events:none;font:600 13px ui-monospace,Menlo,monospace;background:#fff;color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--a3);padding:5px 8px;white-space:nowrap;will-change:transform}
+.vibe:after{content:"";position:absolute;right:14px;bottom:-8px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.vibe i{display:inline-block;width:.55em;height:1em;background:var(--ink);vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1) infinite;font-style:normal}
+@keyframes blink{50%{opacity:0}}
 .reveal{z-index:10;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);text-align:center;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none}
 .reveal.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 .reveal h2{font-weight:800;font-size:clamp(40px,7vw,96px);line-height:.9;text-transform:uppercase;background:var(--a1);padding:6px 14px 2px;box-shadow:6px 6px 0 var(--ink)}
 .reveal p{margin-top:14px;font-weight:600;font-size:20px}
 .reveal a{display:inline-block;margin-top:14px;padding:10px 18px 9px;background:var(--ink);color:var(--a2);text-decoration:none;font-weight:800;font-size:18px;text-transform:uppercase;box-shadow:4px 4px 0 var(--a3)}
-@media (max-width:700px){nav{bottom:62px}.label,.idea,.fossil,.hint{display:none}nav a,button.re{font-size:13px;padding:7px 10px 6px}}
+@media (max-width:700px){.vibe{font-size:11px}nav{bottom:62px}.label,.idea,.fossil,.hint{display:none}nav a,button.re{font-size:13px;padding:7px 10px 6px}}
 </style>
 </head>
 <body>
@@ -136,7 +140,7 @@ function makePalette(){const base=R(0,360),sat=R(78,96),n=9,cols=[];
   const paper=new THREE.Color().setHSL(((base+R(150,210))%360)/360,R(.25,.45),R(.89,.93));
   return {cols:cols.map(c=>c.getHex()),css:cols.map(c=>'#'+c.getHexString()),paper:'#'+paper.getHexString()}}
 
-let world,eyes,heads,labels,ideaEls,fossilEls,clickables,anim,P,piano,pianoParts,rope,hand,floorY,state,vy,shards,tState;
+let vibe=null,world,eyes,heads,labels,ideaEls,fossilEls,clickables,anim,P,piano,pianoParts,rope,hand,floorY,state,vy,shards,tState;
 const card=document.getElementById('card'),reveal=document.getElementById('reveal');
 
 // ── a figure in local space; origin = hips
@@ -218,6 +222,12 @@ function build(seed){
     const j=blob(r*1.7,new THREE.Color(A.color).lerp(new THREE.Color(B.color),.5).getHex(),0,.12);j.position.copy(m);world.add(j);
     if(a==='music')swingCurve=L.cu}
 
+  // a prompt bubble: someone keeps asking for one more thing
+  if(!vibe){vibe={el:mkLabel('vibe','<span></span><i></i>')};vibe.txt=vibe.el.firstChild;
+    const L=['> make it more playful','> rearrange everything','> new colours, every time','> one more thing…','> ditch the old stuff','> raus damit.','> now in english','> why not a piano?','> hmm. again.','> ship it'];
+    let li=(Math.random()*L.length)|0,ci=0,pause=0;
+    setInterval(()=>{if(pause>0){pause--;return}const l=L[li];if(ci<=l.length){vibe.txt.textContent=l.slice(0,ci++)}else{pause=18;ci=0;li=(li+1+((Math.random()*(L.length-1))|0))%L.length}},70)}
+  vibe.obj=parts.code.head;
   // labels for figures
   for(const k of Object.keys(parts)){const p=parts[k];if(p.group===gG)continue;const el=mkLabel('label',`<b>${p.u.label}</b><span>${p.u.sub}</span>`);labels.push({el,obj:p.head,dy:.95+(p.u.prop==='tree'?.8:p.u.prop==='tophat'||p.u.prop==='bulb'?.4:0),sx:p.sideX||0})}
 
@@ -342,6 +352,8 @@ function frame(){const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
     if(tState>7){shards.forEach(s=>{world.remove(s.m);s.m.geometry.dispose()});shards=[];state='lower';piano.visible=true;rope.visible=true;piano.position.y=hand.y+8}}
   if(state==='lower'){piano.position.y+=(hand.y-piano.position.y)*Math.min(1,dt*3);rope.visible=piano.position.y-hand.y<.05;if(Math.abs(piano.position.y-hand.y)<.01){piano.position.y=hand.y;state='hang'}}
   Rn.render(S,cam);
+  if(vibe&&vibe.obj){vibe.obj.getWorldPosition(tmp);tmp.y+=1.9*vibe.obj.parent.scale.x;tmp.project(cam);const w=vibe.el.offsetWidth;
+    vibe.el.style.transform=`translate(${Math.max(8,(tmp.x+1)/2*innerWidth-w+28)}px,${(1-tmp.y)/2*innerHeight-vibe.el.offsetHeight}px)`;vibe.el.style.visibility=Math.abs(tmp.x)>1.05||Math.abs(tmp.y)>1.05?'hidden':'visible'}
   if(innerWidth>700){place(labels,true);place([...ideaEls,...fossilEls],false)}
   requestAnimationFrame(frame)}
 frame();
