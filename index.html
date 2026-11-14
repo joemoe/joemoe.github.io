@@ -196,15 +196,27 @@ function build(seed){
   const skip={};for(const[a,ka,b,kb]of LINKS){(skip[a]=skip[a]||{})[ka]=1;(skip[b]=skip[b]||{})[kb]=1}
   const ids=Object.keys(UNITS), giant=rnd()<.92?pick(ids.filter(i=>i!=='twin')):null;
   const occ=[], parts={}; let ci=3, gG=null;
+  // pick the strange pairs first, so butt- and heart-partners can be placed side by side
+  const unitOf=k=>k==='code'||k==='music'?'twin':k, allParts=['sail','invest','code','music','tree','di','sport'];
+  const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+  let PR;for(let k=0;k<80;k++){const a=shuf(allParts.filter(x=>unitOf(x)!==giant));const butt=[a[0],a[1]],heart=[a[2],a[3]];
+    const us=[...butt,...heart].map(unitOf);if(new Set(us).size<4)continue;
+    const rest=shuf(allParts.filter(x=>![...butt,...heart].includes(x)));const nose=[rest[0],rest.find(x=>unitOf(x)!==unitOf(rest[0]))];
+    if(!nose[1])continue;PR={nose,butt,heart};break}
+  const partner={};for(const kind of['butt','heart']){const[a,b]=PR[kind].map(unitOf);partner[b]={of:a,kind};partner[a]={of:b,kind}}
+  const placed={};
   for(const id of ids){
     const g=new THREE.Group();world.add(g);
     const isG=id===giant; if(isG)gG=g; let sc=isG?R(2.3,3.0):R(.85,1.35)*(portrait?.8:1), z=isG?R(4,6.5):R(-7,1.5), nx,ny;
     if(id==='twin') sc*=.9;
     if(isG){nx=(portrait||rnd()<.6?1:-1)*R(.82,.98);ny=nx<0?R(-.9,-.65):R(-.35,.25);if(portrait)sc*=.75}
+    else if(partner[id]&&placed[partner[id].of]){const Q=placed[partner[id].of],qn=toNDC(Q.pos);sc=Q.sc*R(.9,1.1);
+      const side=qn.x>.25?-1:qn.x<-.25?1:(rnd()<.5?-1:1),gap=(2.3+(id==='twin'||partner[id].of==='twin'?1.1:0))*(Q.sc+sc)/2;
+      const pw=Q.pos.clone().add(V(side*R(gap,gap*1.15),R(-.4,.4)*sc,R(-.7,.7)));z=pw.z;const n=toNDC(pw);nx=n.x;ny=n.y;occ.push({x:nx,y:ny,r:.26*sc*(18/(CAM.z-z))})}
     else{let tries=0;const rr=.26*sc*(18/(CAM.z-z));
-      do{nx=R(-.85,.85);ny=R(-.62,.5);tries++}while(tries<400&&(occ.some(o=>Math.hypot((nx-o.x)*asp,ny-o.y)<rr+o.r)||(nx<-.1&&ny>.38)));occ.push({x:nx,y:ny,r:rr})}
+      do{nx=R(-.85,.85);ny=R(-.62,.5);tries++}while(tries<400&&(occ.some(o=>Math.hypot((nx-o.x)*asp,ny-o.y)<rr+o.r)||(nx<.12&&ny>.32)));occ.push({x:nx,y:ny,r:rr*1.4})}
     const pos=worldAt(nx,ny,z);g.position.copy(pos).add(V(0,-.9*sc,0));g.scale.setScalar(sc);
-    g.rotation.set(R(-.12,.12),isG?-Math.sign(nx)*R(.25,.6):R(-.6,.6),id==='twin'?R(-.1,.1):R(-.45,.45));
+    g.rotation.set(R(-.12,.12),isG?-Math.sign(nx)*R(.25,.6):R(-.6,.6),id==='twin'?R(-.1,.1):R(-.45,.45));placed[id]={pos:worldAt(nx,ny,z),sc,g};
     if(id==='twin'){
       parts.code=body(g,{ox:-.88,headDx:.36,color:P.cols[ci++],raised:'handL',eyes:[[-.74,2.1,.5]]});
       parts.music=body(g,{ox:.88,headDx:-.36,color:P.cols[ci++],prop:'phones',skip:skip.music,eyes:[[.74,2.1,.5]]});
@@ -213,6 +225,9 @@ function build(seed){
     } else { parts[id]=body(g,{color:P.cols[id==='sail'?0:id==='invest'?1:id==='tree'?2:id==='di'?5:6]??P.cols[ci++],prop:UNITS[id].prop,skip:skip[id]}); parts[id].u=UNITS[id]; }
     if(id==='sail')parts[id].color; // noop
   }
+  // partners turn: butt-twins back to back, heart-twins towards each other
+  for(const kind of['butt','heart']){const[a,b]=PR[kind].map(unitOf),A=placed[a],B=placed[b],l=A.pos.x<B.pos.x?A:B,r=l===A?B:A;
+    const t=kind==='butt'?R(.9,1.3):-R(.45,.75);l.g.rotation.y=-t;r.g.rotation.y=t;l.g.rotation.z*=.4;r.g.rotation.z*=.4}
   world.updateMatrixWorld(true);
   const W=(p,v)=>p.group.localToWorld(v.clone());
 
@@ -233,9 +248,7 @@ function build(seed){
   vibe.obj=parts.code.head;
 
   // ── stranger connections, re-paired every time: nose → hole in head, fused buttocks, a shared heart
-  {const cand=Object.keys(parts);let pr;
-   for(let k=0;k<50;k++){const a=[...cand];for(let i=a.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}
-     pr=[[a[0],a[1]],[a[2],a[3]],[a[4],a[5]]];if(!pr.some(([x,y])=>parts[x].group===parts[y].group))break}
+  {const pr=[PR.nose,PR.butt,PR.heart];
    const dirW=(p,v)=>v.clone().transformDirection(p.group.matrixWorld);
    const bend=(a,b,amt)=>{const m=a.clone().add(b).multiplyScalar(.5);return m.add(V(R(-1,1),R(-.2,1),R(-1,1)).multiplyScalar(a.distanceTo(b)*amt))};
    // 1) the long nose of A grows into a hole in B's head
