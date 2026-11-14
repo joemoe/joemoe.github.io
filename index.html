@@ -171,6 +171,19 @@ function body(g,o){
 function eye(parent,pos,r){const w=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),mat(WHITE));w.position.copy(pos);parent.add(w);
   const p=new THREE.Mesh(new THREE.IcosahedronGeometry(r*.48,1),mat(INK));world.add(p);eyes.push({w,p,r});}
 
+
+// ── ballpoint scribbles: thin blue lines, drawn twice, boiling like a hand drawing
+const PEN=0x2b45a8;
+function circ(cx,cy,r,turns=1.15,n=14){const a0=Math.random()*6;return[...Array(n+1)].map((_,i)=>{const a=a0+i/n*turns*Math.PI*2,rr=r*(1+(i/n)*.12);return[cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]})}
+function scribble(strokes,{reps=2,jit=.025,lw=1}={}){
+  const g=new THREE.Group(),mat_=new THREE.LineBasicMaterial({color:PEN,transparent:true,opacity:.85});g.userData.mat=mat_;
+  const items=[];for(const st of strokes)for(let r=0;r<reps;r++){const n=(st.length-1)*4+1,geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(n*3),3));
+    const L=new THREE.Line(geo,mat_);g.add(L);items.push({st,geo,n})}
+  const draw=()=>{for(const{st,geo,n}of items){const p=geo.attributes.position,ox=(Math.random()-.5)*jit,oy=(Math.random()-.5)*jit;let k=0;
+    for(let i=0;i<st.length-1;i++)for(let j=0;j<(i===st.length-2?5:4);j++){const t=j/4,a=st[i],b=st[i+1];p.setXYZ(k++,a[0]+(b[0]-a[0])*t+ox+(Math.random()-.5)*jit*.6,a[1]+(b[1]-a[1])*t+oy+(Math.random()-.5)*jit*.6,0)}
+    p.needsUpdate=true}};
+  draw();let last=0;g.userData.boil=t=>{const b=Math.floor(t*7);if(b!==last){last=b;draw()}};return g}
+
 // screen → world at depth z
 function worldAt(nx,ny,z){const v=V(nx,ny,.5).unproject(cam),d=v.sub(cam.position).normalize(),t=(z-cam.position.z)/d.z;return cam.position.clone().addScaledVector(d,t)}
 function toNDC(p){return p.clone().project(cam)}
@@ -341,6 +354,23 @@ function build(seed){
   // fossils: old texts, drifting in the back
   FOSSILS.forEach((d,i)=>{const r=blob(.6,new THREE.Color().setHSL(R(0,1),.12,R(.55,.72)).getHex(),1,.4);r.scale.set(1.2,.7,.9);r.position.copy(freeSpot(R(-14,-8),.07));world.add(r);
     const dd={...d,tag:'fossil · '+d.y};const el=mkLabel('fossil',d.y);el.onclick=e=>{e.stopPropagation();showCard(dd,e.clientX,e.clientY)};fossilEls.push({el,obj:r,dy:.8});addClick([r],dd);anim.push(t=>{r.rotation.y=t*.15+i})});
+
+  // ── little activities in the background, ballpoint style. first: skiing
+  {const act=new THREE.Group();
+   const slope=scribble([[[-3.2,1.25],[-1.5,.75],[0,.2],[1.6,-.35],[3.2,-1.0]],
+     [[-2.6,.8],[-2.3,.75]],[[-1.2,.35],[-.85,.28]],[[.4,-.2],[.8,-.3]],[[1.9,-.75],[2.3,-.85]],
+     [[-2.4,1.06],[-2.25,1.6],[-2.1,1.08]],[[-2.5,1.3],[-2.25,1.85],[-2.0,1.32]],[[-2.25,1.06],[-2.25,.92]], // a little tree
+     [[2.2,-.6],[2.38,-.1],[2.56,-.68]],[[2.38,-.62],[2.38,-.75]]],{jit:.03});
+   act.add(slope);
+   const skier=scribble([circ(.13,.97,.085),[[.1,.88],[0,.56]],[[.08,.82],[.24,.66],[.38,.64]],[[.36,.72],[.18,0]],[[.07,.8],[-.06,.63],[.04,.52]],[[.04,.58],[-.26,.02]],
+     [[0,.56],[.2,.36],[.08,.08]],[[0,.56],[.12,.3],[-.02,.08]],[[-.36,.05],[.55,.05],[.64,.13]],[[-.31,.0],[.6,.0],[.69,.08]],[[.07,1.05],[.13,1.14],[.2,1.04]],
+     [[-.4,.1],[-.55,.2]],[[-.45,.03],[-.62,.06]],[[-.42,.16],[-.5,.3]]],{jit:.02});
+   act.add(skier);
+   act.position.copy(freeSpot(-10,.12));act.scale.setScalar(1.3);world.add(act);
+   const ang=Math.atan2(-2.25,6.4),path=u=>V(-3.0+6.2*u,1.2-2.25*u+Math.sin(u*Math.PI)*-.08,0);
+   anim.push(t=>{slope.userData.boil(t);skier.userData.boil(t);const u=(t/7)%1,p=path(u);skier.position.copy(p).add(V(0,.04,0));skier.rotation.z=ang+Math.sin(t*3)*.04;
+     skier.userData.mat.opacity=.85*Math.min(1,Math.min(u,1-u)*8)});
+}
   // the stream: immerok · ververica · flink — through every body
   {const pts=Object.values(parts).map(p=>W(p,V((p.group===parts.code.group?(p===parts.code?-.88:.88):0),.75,0)));for(let i=pts.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[pts[i],pts[j]]=[pts[j],pts[i]]}
    const wp=[];pts.forEach((p,i)=>{wp.push(p.clone().add(V(-1.1,R(-.5,.5),i%2?1.3:-1.3)),p,p.clone().add(V(1.1,R(-.5,.5),i%2?-1.3:1.3)))});
