@@ -28,7 +28,12 @@ h1{font-weight:800;font-size:clamp(56px,10vw,150px);line-height:.82;letter-spaci
 .who{margin-top:4px;font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
 nav{position:fixed;right:clamp(16px,3vw,40px);bottom:clamp(14px,3vh,30px);display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;z-index:3}
 nav a,button.re{display:inline-block;padding:9px 14px 8px;background:var(--ink);color:var(--a1);text-decoration:none;font:800 16px var(--ui);letter-spacing:.04em;text-transform:uppercase;box-shadow:3px 3px 0 var(--a3);transition:transform .15s,box-shadow .15s;border:0;cursor:pointer}
-nav a:nth-child(2){color:var(--a2)}nav a:nth-child(3){color:var(--a3)}nav a:nth-child(4){color:#fff}
+nav a:nth-child(3){color:var(--a2)}nav a:nth-child(4){color:var(--a3)}nav a:nth-child(5){color:#fff}
+nav a.hot{background:var(--a1);color:var(--ink);box-shadow:3px 3px 0 var(--ink);animation:nudge 3.2s ease-in-out infinite}
+nav a.hot em,.idea.hot em{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ff2a2a;margin-right:7px;vertical-align:1px;box-shadow:0 0 0 0 rgba(255,42,42,.7);animation:live 1.4s infinite}
+@keyframes live{70%{box-shadow:0 0 0 9px rgba(255,42,42,0)}100%{box-shadow:0 0 0 0 rgba(255,42,42,0)}}
+@keyframes nudge{0%,86%,100%{transform:none}90%{transform:rotate(-3deg) translateY(-2px)}95%{transform:rotate(2deg)}}
+.idea.hot{font-size:22px;background:var(--a1);padding:2px 8px;box-shadow:3px 3px 0 var(--ink);font-style:normal;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
 nav a:hover,button.re:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--a3)}
 .side{position:fixed;left:clamp(16px,3vw,40px);bottom:clamp(14px,3vh,30px);display:flex;align-items:center;gap:14px;z-index:3}
 button.re{color:#fff;background:var(--ink)}
@@ -67,6 +72,7 @@ button.re{color:#fff;background:var(--ink)}
 </header>
 <div class="side"><button class="re" id="re">↻ rearrange</button><span class="hint">the piano won't hang forever.</span></div>
 <nav>
+  <a class="hot" href="https://joemoe.at/windshift/" rel="noopener"><em></em>windshift</a>
   <a href="https://joesmash.ventures" rel="noopener">ventures</a>
   <a href="https://www.instagram.com/letsdropthisschnitzel/" rel="noopener">schnitzel</a>
   <a href="https://digitaleinitiativen.at" rel="noopener">digitale initiativen</a>
@@ -93,7 +99,7 @@ const UNITS = {
 // "the foot of one becomes the hand of the other"
 const LINKS = [ ['sail','footR','invest','handL'], ['music','handR','tree','handL'], ['di','handR','sport','footL'] ];
 const IDEAS = [
-  { near:['sail'],           t:'wind as data', body:'windshift: live wind for the eastern part of lake constance.', link:'https://joemoe.at/windshift', lt:'open windshift' },
+  { near:['sail'],           t:'wind as data', hot:1, body:'windshift: live wind for the eastern part of lake constance. a lot going on right now.', link:'https://joemoe.at/windshift', lt:'open windshift' },
   { near:['invest','code'],  t:'transhumanism, revisited', body:'in 2019 i wrote about the real dangers of transhumanism. in 2026 i invest in companies meant to prevent them. to be continued.' },
   { near:['invest'],         t:'making ai safe', body:'ai and robots will replace a lot of work. the question is: for whom. i back companies making sure everyone lives well afterwards. not a few tech bros. not the machines.' },
   { near:['code','music'],   t:'rhythm = algorithm', body:'a drum machine is a for-loop with feelings. two heads, one eye.' },
@@ -384,8 +390,12 @@ function build(seed){
     if(bad){pos=freeSpot(z,.06);occ[occ.length-1].idea=1}else{pos=worldAt(n.x+R(-.06,.06),n.y+R(0,.08),z);occ.push({x:n.x,y:n.y,r:.06,idea:1})}
     const col=parts[d.near[0]].color;
     const m=new THREE.Mesh(jitter(new THREE.OctahedronGeometry(.26,0),.2),new THREE.MeshLambertMaterial({color:col,emissive:new THREE.Color(col).multiplyScalar(.35),flatShading:true}));m.position.copy(pos);world.add(m);
-    const y0=pos.y;anim.push(t=>{m.rotation.y=t*.8+i;m.position.y=y0+Math.sin(t*1.4+i)*.12});
-    const el=mkLabel('idea',d.t);el.onclick=e=>{e.stopPropagation();showCard(d,e.clientX,e.clientY)};ideaEls.push({el,obj:m,dx:16});addClick([m],d)});
+    const y0=pos.y;anim.push(t=>{m.rotation.y=t*(d.hot?2.6:.8)+i;m.position.y=y0+Math.sin(t*1.4+i)*.12});
+    if(d.hot){m.scale.setScalar(1.7);anim.push(t=>{m.material.emissiveIntensity=1+Math.sin(t*4)*.6});
+      const gusts=[...Array(5)].map((_,k)=>{const y=(k-2)*.38,w=R(1.4,2.4),g=scribble([[[0,y],[w*.35,y+.06],[w*.7,y-.02],[w,y+.04],[w+.18,y+.22],[w+.02,y+.34],[w-.12,y+.2]]],{jit:.03,reps:1});
+        g.position.copy(pos).add(V(-2.4,0,.4));world.add(g);return{g,o:rnd(),sp:R(.9,1.6)}});
+      anim.push(t=>gusts.forEach(q=>{q.g.userData.boil(t);const u=(t*.35*q.sp+q.o)%1;q.g.position.x=pos.x-2.6+u*3.4;q.g.userData.mat.opacity=.85*Math.sin(u*Math.PI)}))}
+    const el=mkLabel('idea'+(d.hot?' hot':''),d.hot?'<em></em>'+d.t:d.t);el.onclick=e=>{e.stopPropagation();showCard(d,e.clientX,e.clientY)};ideaEls.push({el,obj:m,dx:16});addClick([m],d)});
 }
 
 // ═════════════════════════ interaction & loop ═════════════════════════
