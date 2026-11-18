@@ -391,6 +391,45 @@ function build(seed){
    anim.push(t=>{slope.userData.boil(t);skier.userData.boil(t);const u=(t/7)%1,p=path(u);skier.position.copy(p).add(V(0,.04,0));skier.rotation.z=ang+Math.sin(t*3)*.04;
      skier.userData.mat.opacity=.85*Math.min(1,Math.min(u,1-u)*8)});
 }
+
+  // ── more ballpoint activities
+  const place=(g,z,sc)=>{g.position.copy(freeSpot(z,.19));g.scale.setScalar(sc);world.add(g)};
+  const poses=(list)=>{const g=new THREE.Group();const ps=list.map(st=>{const q=scribble(st,{jit:.02});g.add(q);return q});return{g,ps,show:(i,t)=>ps.forEach((q,k)=>{q.visible=k===i;q.userData.boil(t)})}};
+  // sailing
+  {const g=new THREE.Group();const water=scribble([[[-2.8,0],[-2.2,.07],[-1.6,0],[-1,.07],[-.4,0],[.2,.07],[.8,0],[1.4,.07],[2,0],[2.6,.07],[2.9,0]],
+      [[-2.2,-.22],[-1.8,-.17],[-1.4,-.22]],[[.3,-.25],[.7,-.2],[1.1,-.25]],[[1.7,-.4],[2.1,-.35]]],{jit:.03});g.add(water);
+    const boat=scribble([[[-.55,.2],[.55,.2],[.4,-.04],[-.42,-.04],[-.55,.2]],[[0,.2],[0,1.45]],[[.03,1.4],[.03,.3],[.62,.3],[.03,1.4]],[[-.03,1.22],[-.52,.27],[-.03,.27]],
+      circ(-.3,.36,.065),[[-.3,.29],[-.3,.2]],[[.03,1.45],[.25,1.38],[.03,1.32]]],{jit:.02});g.add(boat);
+    const sun=scribble([circ(2.1,1.4,.22,1.3,16),[[2.1,1.75],[2.1,1.9]],[[2.45,1.4],[2.6,1.4]],[[1.75,1.4],[1.6,1.4]],[[2.35,1.65],[2.45,1.75]],[[1.85,1.65],[1.75,1.75]]],{jit:.03});g.add(sun);
+    place(g,-11,1.25);
+    anim.push(t=>{water.userData.boil(t);boat.userData.boil(t);sun.userData.boil(t);const u=(t/14)%1;boat.position.set(-2.3+4.6*u,Math.sin(t*1.8)*.05,0);boat.rotation.z=-.1+Math.sin(t*1.3)*.07;
+      boat.userData.mat.opacity=.85*Math.min(1,Math.min(u,1-u)*7)})}
+  // crossfit: squat clean → overhead, and down again
+  {const g=new THREE.Group(),bar=(y)=>[[[-.5,y],[.5,y]],circ(-.5,y,.1),circ(.5,y,.1),circ(-.43,y,.08)];
+    const P=poses([[circ(0,.8,.085),[[0,.71],[0,.42]],[[0,.42],[.26,.3],[.17,0]],[[0,.42],[-.26,.3],[-.17,0]],[[0,.66],[.2,.6],[.24,.74]],[[0,.66],[-.2,.6],[-.24,.74]],...bar(.75)],
+      [circ(0,1.02,.085),[[0,.93],[0,.55]],[[0,.55],[.12,.28],[.15,0]],[[0,.55],[-.12,.28],[-.15,0]],[[0,.88],[.2,1.1],[.26,1.32]],[[0,.88],[-.2,1.1],[-.26,1.32]],...bar(1.33),
+       [[.62,1.5],[.7,1.62]],[[-.62,1.5],[-.7,1.62]]]]);
+    g.add(P.g);const floor=scribble([[[-.9,0],[.9,0]],[[-.75,-.12],[-.5,-.12]],[[.4,-.12],[.7,-.12]]],{jit:.02});g.add(floor);
+    place(g,-10,1.15);anim.push(t=>{floor.userData.boil(t);P.show(Math.floor(t/.75)%2,t)})}
+  // running
+  {const g=new THREE.Group();
+    const P=poses([[circ(.08,1.0,.08),[[.05,.92],[0,.56]],[[0,.56],[.22,.4],[.16,.14]],[[0,.56],[-.12,.3],[-.34,.18]],[[.04,.84],[.18,.7],[.3,.8]],[[.04,.84],[-.12,.7],[-.18,.56]]],
+      [circ(.08,.97,.08),[[.05,.89],[0,.53]],[[0,.53],[.1,.27],[.28,.02]],[[0,.53],[-.06,.3],[-.26,.36]],[[.04,.81],[-.14,.7],[-.24,.78]],[[.04,.81],[.16,.66],[.22,.54]]]]);
+    const ground=scribble([[[-2.6,0],[2.6,0]],[[-2.1,-.14],[-1.7,-.14]],[[.6,-.14],[1.1,-.14]]],{jit:.025});g.add(ground);g.add(P.g);
+    const dust=scribble([[[-.35,.06],[-.6,.1]],[[-.4,.16],[-.62,.24]],[[-.3,.26],[-.5,.36]]],{jit:.02,reps:1});P.g.add(dust);
+    place(g,-12,1.2);anim.push(t=>{ground.userData.boil(t);dust.userData.boil(t);P.show(Math.floor(t/.2)%2,t);const u=(t/9)%1;P.g.position.set(-2.3+4.6*u,Math.abs(Math.sin(t*Math.PI/.2))*.05,0);
+      P.ps.forEach(q=>q.userData.mat.opacity=.85*Math.min(1,Math.min(u,1-u)*7));dust.userData.mat.opacity=P.ps[0].userData.mat.opacity})}
+  // someone prompting a lot
+  {const g=new THREE.Group();
+    const desk=scribble([[[-.2,.55],[1.0,.55]],[[-.1,.55],[-.1,0]],[[.9,.55],[.9,0]],[[.3,.56],[.72,.56],[.8,.9],[.38,.9],[.3,.56]],[[-.55,0],[-.5,.4],[-.15,.4]],[[-.5,.4],[-.45,.75]],
+      [[.92,.55],[.92,.7],[1.02,.7],[1.02,.55]]],{jit:.02});g.add(desk);
+    const P=poses([[circ(-.22,.98,.09),[[-.25,.88],[-.3,.45]],[[-.3,.45],[.0,.42],[.0,.05]],[[-.27,.76],[.0,.62],[.3,.6]],[[-.27,.76],[-.02,.66],[.36,.62]]],
+      [circ(-.2,.97,.09),[[-.25,.88],[-.3,.45]],[[-.3,.45],[.0,.42],[.0,.05]],[[-.27,.76],[.0,.65],[.34,.62]],[[-.27,.76],[-.02,.63],[.3,.59]]]]);g.add(P.g);
+    const star=scribble([[[1.8,1.85],[1.8,2.35]],[[1.55,2.1],[2.05,2.1]],[[1.64,1.94],[1.96,2.26]],[[1.64,2.26],[1.96,1.94]]],{jit:.03});g.add(star);
+    const bub=[...Array(6)].map((_,k)=>{const b=scribble([[[0,0],[.42,0],[.42,.22],[.1,.22],[.02,.3],[.04,.22],[0,.22],[0,0]],[[.06,.15],[.34,.15]],[[.06,.08],[.26,.08]]],{jit:.015,reps:1});g.add(b);return{b,o:k/6}});
+    place(g,-10.5,1.2);
+    anim.push(t=>{desk.userData.boil(t);star.userData.boil(t);star.rotation.z=Math.sin(t*2)*.1;P.show(Math.floor(t/.12)%2,t);
+      bub.forEach(({b,o})=>{const u=(t*.22+o)%1;b.userData.boil(t);b.position.set(.55+u*1.2+Math.sin(u*9+o*7)*.12,.95+u*1.1,0);b.scale.setScalar(.6+u*.5);b.userData.mat.opacity=.85*Math.sin(u*Math.PI)})})}
   // the stream: immerok · ververica · flink — through every body
   {const pts=Object.values(parts).map(p=>W(p,V((p.group===parts.code.group?(p===parts.code?-.88:.88):0),.75,0)));for(let i=pts.length-1;i>0;i--){const j=(rnd()*(i+1))|0;[pts[i],pts[j]]=[pts[j],pts[i]]}
    const wp=[];pts.forEach((p,i)=>{wp.push(p.clone().add(V(-1.1,R(-.5,.5),i%2?1.3:-1.3)),p,p.clone().add(V(1.1,R(-.5,.5),i%2?-1.3:1.3)))});
