@@ -114,6 +114,7 @@ const STATIONS = {
   jug:   { t:'portfolio', body:'context sdk · boxbase · heizma · wearedevelopers · ardor · subdron · pina earth · phonocut', link:'https://joesmash.ventures', lt:'joe smash ventures', tag:'angel · up in the air' },
   pk:    { t:'20 × 20', body:'four pechakucha nights in dornbirn, 2016–2018. twenty slides, twenty seconds each, no way back.', links:[['the real dangers of transhumanism','https://www.pechakucha.com/presentations/die-realen-gefahren-des-transhumanismus'],['hoffnung','https://www.pechakucha.com/presentations/hoffnung'],['dystopia / utopia','https://www.pechakucha.com/presentations/dystopia-slash-utopia'],['worte, die man öfters verwenden sollte!','https://www.pechakucha.com/presentations/worte-die-man-ofters-verwenden-sollte']], tag:'pechakucha night dornbirn' },
   rec:   { t:'dorf am see', body:'hart, hart wie ein harder.', link:'https://open.spotify.com/track/4UJFHNmq00BK5p6d11IUai', lt:'spotify', tag:'wegethardons · 2008' },
+  ditarr:{ t:'ditarr', body:'a new crew member at digital initiatives. automates the boring parts, so the humans can make things. arr.', tag:'work in progress · arr' },
   kb:    { t:'cf · running · ski', body:'crossfit, running, ski touring. the body as the slowest stream.', link:'https://www.strava.com/athletes/6886582', lt:'strava', tag:'motion' },
 };
 const FOSSILS = [
@@ -231,9 +232,12 @@ function build(seed){
     if(isG){nx=(portrait||rnd()<.6?1:-1)*R(.82,.98);ny=nx<0?R(-.9,-.65):R(-.35,.25);if(portrait)sc*=.75}
     else if(partner[id]&&placed[partner[id].of]){const Q=placed[partner[id].of],qn=toNDC(Q.pos);sc=Q.sc*R(.9,1.1);
       const side=qn.x>.25?-1:qn.x<-.25?1:(rnd()<.5?-1:1),gap=(2.3+(id==='twin'||partner[id].of==='twin'?1.1:0))*(Q.sc+sc)/2;
-      const pw=Q.pos.clone().add(V(side*R(gap,gap*1.15),R(-.4,.4)*sc,R(-.7,.7)));z=pw.z;const n=toNDC(pw);nx=n.x;ny=n.y;occ.push({x:nx,y:ny,r:.26*sc*(18/(CAM.z-z))})}
+      let pw=Q.pos.clone().add(V(side*R(gap,gap*1.15),R(-.4,.4)*sc,R(-.7,.7)));let n=toNDC(pw);
+      if((n.x<.15&&n.y>.1)||Math.abs(n.x)>.92){pw=Q.pos.clone().add(V(-side*gap*1.05,R(-.4,0)*sc,R(-.7,.7)));n=toNDC(pw)}
+      if(n.x<.15&&n.y>.1){pw.y-=gap;n=toNDC(pw)}
+      z=pw.z;nx=n.x;ny=n.y;occ.push({x:nx,y:ny,r:.26*sc*(18/(CAM.z-z))})}
     else{let tries=0;const rr=.26*sc*(18/(CAM.z-z));
-      do{nx=R(-.85,.85);ny=R(-.62,.5);tries++}while(tries<400&&(occ.some(o=>Math.hypot((nx-o.x)*asp,ny-o.y)<rr+o.r)||(nx<.12&&ny>.32)));occ.push({x:nx,y:ny,r:rr*1.4})}
+      do{nx=R(-.85,.85);ny=R(-.62,.5);tries++}while(tries<400&&(occ.some(o=>Math.hypot((nx-o.x)*asp,ny-o.y)<rr+o.r)||(nx<.15&&ny>.1)));occ.push({x:nx,y:ny,r:rr*1.4})}
     const pos=worldAt(nx,ny,z);g.position.copy(pos).add(V(0,-.9*sc,0));g.scale.setScalar(sc);
     g.rotation.set(R(-.12,.12),isG?-Math.sign(nx)*R(.25,.6):R(-.6,.6),id==='twin'?R(-.1,.1):R(-.45,.45));placed[id]={pos:worldAt(nx,ny,z),sc,g};
     if(id==='twin'){
@@ -261,7 +265,7 @@ function build(seed){
 
   // a prompt bubble: someone keeps asking for one more thing
   if(!vibe){vibe={el:mkLabel('vibe','<span></span><i></i>')};vibe.txt=vibe.el.firstChild;
-    const L=['> make it more playful','> rearrange everything','> new colours, every time','> one more thing…','> ditch the old stuff','> raus damit.','> now in english','> why not a piano?','> hmm. again.','> ship it'];
+    const L=['> make it more playful','> rearrange everything','> new colours, every time','> one more thing…','> ditch the old stuff','> raus damit.','> now in english','> why not a piano?','> hmm. again.','> arr.','> ship it'];
     let li=(Math.random()*L.length)|0,ci=0,pause=0;
     setInterval(()=>{if(pause>0){pause--;return}const l=L[li];if(ci<=l.length){vibe.txt.textContent=l.slice(0,ci++)}else{pause=18;ci=0;li=(li+1+((Math.random()*(L.length-1))|0))%L.length}},70)}
   vibe.obj=parts.code.head;
@@ -314,6 +318,16 @@ function build(seed){
   {const g=parts.invest.group,shapes=[()=>new THREE.TetrahedronGeometry(.17),()=>new THREE.BoxGeometry(.24,.24,.24),()=>new THREE.OctahedronGeometry(.17),()=>new THREE.IcosahedronGeometry(.16,0),()=>new THREE.CylinderGeometry(.17,.17,.05,8),()=>new THREE.ConeGeometry(.15,.3,5),()=>new THREE.DodecahedronGeometry(.15),()=>new THREE.TorusGeometry(.12,.05,4,8)];
    const js=shapes.map((s,i)=>{const m=new THREE.Mesh(s(),mat(i%3?P.cols[(i+2)%9]:INK));g.add(m);return m});
    anim.push(t=>js.forEach((m,i)=>{const a=t*2.2+i/js.length*Math.PI*2;m.position.set(Math.cos(a)*1.0,3.35+Math.sin(a)*.55+Math.abs(Math.sin(a*2))*.15,.3+Math.sin(a)*.2);m.rotation.set(t*3+i,t*2+i,0)}));addClick(js,STATIONS.jug)}
+
+  // ditarr: a pixel parrot on the maker's shoulder
+  {const g=parts.di.group,ox=parts.di.A.handL.base.x+.6,pg=new THREE.Group(),C_={Y:0xf7d548,D:0xd9a91f,W:0xffffff,K:INK,G:0x8a8f99};
+   const MAP=['..Y......','..YY.....','.YYYYY...','.YYWKWGG.','.YYWWWGGG','.YYYYYG..','YYYYYY...','YYYDYY...','YYDDYY...','.YDDY....','.YYGG....','..Y......','.Y.......','Y........'];
+   const box=new THREE.BoxGeometry(1,1,1),mats={};for(const k in C_)mats[k]=mat(C_[k]);const head=new THREE.Group();pg.add(head);
+   MAP.forEach((row,r)=>[...row].forEach((ch,c)=>{if(ch==='.')return;for(const z of[0,1]){if(ch==='K'&&z===0)continue;
+     const m=new THREE.Mesh(box,mats[ch]);m.position.set(c-4,13-r,z-.5);(r<=5?head:pg).add(m)}}));
+   pg.scale.setScalar(.12);pg.position.set(ox-.66,1.3,.15);pg.rotation.y=-.35;g.add(pg);
+   anim.push(t=>{const hop=Math.max(0,Math.sin(t*1.7))**20;pg.position.y=1.3+hop*.22;head.rotation.z=Math.sin(t*2.3)*.12;head.position.y=Math.sin(t*4.6)*.25});
+   addClick([pg],STATIONS.ditarr)}
   // kettlebell + skis for motion
   {const g=parts.sport.group,h=parts.sport.A.handR.tip;const kb=blob(.28,INK,1,.08);kb.position.copy(h).add(V(0,-.32,0));g.add(kb);const hd=new THREE.Mesh(new THREE.TorusGeometry(.16,.05,4,8),mat(INK));hd.position.copy(h).add(V(0,-.04,0));g.add(hd);
    const sk=new THREE.Mesh(new THREE.BoxGeometry(.2,.05,2.1),mat(P.cols[7]));sk.position.set(.45,-1.38,.5);g.add(sk);addClick([kb,hd,sk],STATIONS.kb)}
