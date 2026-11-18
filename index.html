@@ -23,6 +23,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--ui);transition:b
 @keyframes hue{to{filter:hue-rotate(360deg)}}
 canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 header{position:fixed;left:clamp(16px,3vw,40px);top:clamp(14px,3vh,34px);pointer-events:none;z-index:2}
+#logo{height:clamp(50px,8.6vw,128px);width:auto;flex:none;overflow:visible;pointer-events:auto;cursor:pointer;transition:transform .3s}
+#logo:hover{transform:rotate(-8deg) scale(1.05)}
+#logo *{transition:fill 1.2s}
+.brand{display:flex;align-items:center;gap:.12em}
 h1{font-weight:800;font-size:clamp(56px,10vw,150px);line-height:.82;letter-spacing:-.02em;text-transform:uppercase}
 .tag{margin-top:10px;font-weight:600;font-style:italic;font-size:clamp(18px,2.2vw,28px)}
 .who{margin-top:4px;font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
@@ -66,7 +70,16 @@ button.re{color:#fff;background:var(--ink)}
 <div class="leak l1"></div><div class="leak l2"></div><div class="leak l3"></div>
 <canvas id="c"></canvas>
 <header>
-  <h1>joemoe</h1>
+  <div class="brand"><svg id="logo" viewBox="0 0 64 64" aria-hidden="true">
+    <defs><clipPath id="eyeclip"><circle cx="32" cy="30" r="13.6"/></clipPath></defs>
+    <polygon id="lgHead" points="20,6 40,4 56,16 60,36 50,54 30,60 12,52 4,32 8,14" fill="#FF2D9B"/>
+    <polygon points="20,6 40,4 30,22" fill="#000" opacity=".12"/><polygon points="4,32 12,52 22,40" fill="#000" opacity=".18"/><polygon points="56,16 60,36 44,28" fill="#fff" opacity=".22"/>
+    <polygon points="8,14 20,6 30,22 4,32" fill="#fff" opacity=".08"/><polygon points="30,60 50,54 40,44" fill="#000" opacity=".1"/>
+    <circle cx="32" cy="30" r="15" fill="#fff"/>
+    <g clip-path="url(#eyeclip)"><g id="lgPupil"><circle cx="34" cy="31" r="7" fill="#141414"/><circle cx="36.5" cy="28.5" r="2" fill="#fff"/></g>
+      <rect id="lgLid" x="16" y="15" width="32" height="0" fill="#FF2D9B"/><path id="lgLash" d="M17 30 Q32 30 47 30" stroke="#141414" stroke-width="2.4" fill="none" opacity="0"/></g>
+    <circle cx="32" cy="30" r="15" fill="none" stroke="#141414" stroke-width="3"/>
+    <rect id="lgSq" x="44" y="46" width="14" height="14" fill="#FFE600" stroke="#141414" stroke-width="3"/></svg><h1>joemoe</h1></div>
   <p class="tag">the joe state of mind.</p>
   <p class="who">johannes moser · vorarlberg</p>
 </header>
@@ -207,7 +220,8 @@ function build(seed){
   world=new THREE.Group();S.add(world);eyes=[];heads=[];labels=[];ideaEls=[];fossilEls=[];clickables=[];anim=[];shards=[];state='hang';reveal.classList.remove('on');card.classList.remove('on');
   P=makePalette();
   {const sv=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><polygon points='20,6 40,4 56,16 60,36 50,54 30,60 12,52 4,32 8,14' fill='${P.css[0]}'/><polygon points='20,6 40,4 30,22' fill='#000' opacity='.12'/><polygon points='4,32 12,52 22,40' fill='#000' opacity='.18'/><polygon points='56,16 60,36 44,28' fill='#fff' opacity='.18'/><circle cx='32' cy='30' r='15' fill='#fff' stroke='#141414' stroke-width='3'/><circle cx='36' cy='31' r='7' fill='#141414'/><rect x='44' y='46' width='14' height='14' fill='${P.css[1]}' stroke='#141414' stroke-width='3'/></svg>`;
-   document.getElementById('fav').href='data:image/svg+xml,'+encodeURIComponent(sv)}
+   document.getElementById('fav').href='data:image/svg+xml,'+encodeURIComponent(sv);
+   for(const id of['lgHead','lgLid'])document.getElementById(id).setAttribute('fill',P.css[0]);document.getElementById('lgSq').setAttribute('fill',P.css[1])}
   const root=document.documentElement.style;root.setProperty('--paper',P.paper);root.setProperty('--a1',P.css[0]);root.setProperty('--a2',P.css[1]);root.setProperty('--a3',P.css[2]);
   cam.position.copy(CAM);cam.lookAt(0,3.5,0);cam.updateMatrixWorld();
   const asp=cam.aspect, portrait=asp<1;
@@ -472,6 +486,22 @@ function resize(){Rn.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth
 let rT;addEventListener('resize',()=>{resize();clearTimeout(rT);rT=setTimeout(()=>build(seedFromHash()??1),250)});
 resize();{const s=seedFromHash();if(s!==null)build(s);else fresh()}
 
+// ── the logo's eye: looks around, follows you sometimes, blinks, now and then dozes off
+{const pu=document.getElementById('lgPupil'),lid=document.getElementById('lgLid'),lash=document.getElementById('lgLash'),logo=document.getElementById('logo');
+ let tx=0,ty=0,x=0,y=0,next=0,lastMove=-9,mx=0,my=0,lidH=0,lidT=0,blinkAt=1.5,sleepUntil=0,mode='look';
+ addEventListener('pointermove',e=>{const r=logo.getBoundingClientRect();mx=e.clientX-(r.left+r.width/2);my=e.clientY-(r.top+r.height*.47);lastMove=performance.now()/1000});
+ logo.addEventListener('click',e=>{e.stopPropagation();mode='surprise';lidT=0;tx=0;ty=0;setTimeout(()=>mode='look',900)});
+ const looks=[[-6,0],[6,0],[0,0],[-5,-4],[5,-4],[0,4],[6,3],[-6,3]];
+ (function tick(){const t=performance.now()/1000;
+   if(t-lastMove<1.6){const d=Math.hypot(mx,my)||1,k=Math.min(6.2,d/30);tx=mx/d*k;ty=my/d*k}
+   else if(t>next){const l=looks[(Math.random()*looks.length)|0];tx=l[0];ty=l[1];next=t+.6+Math.random()*2.2}
+   x+=(tx-x)*.18;y+=(ty-y)*.18;pu.setAttribute('transform',`translate(${x.toFixed(2)},${y.toFixed(2)})`);
+   if(mode==='surprise'){lidT=0;pu.setAttribute('transform',`translate(${x.toFixed(2)},${y.toFixed(2)}) translate(34 31) scale(.6) translate(-34 -31)`)}
+   else if(t<sleepUntil){lidT=Math.min(1,lidT+.04)}
+   else if(t>blinkAt){const ph=(t-blinkAt)/.18;lidT=ph<1?Math.sin(ph*Math.PI):0;if(ph>=1){const r=Math.random();blinkAt=t+(r<.12?.25:1.8+Math.random()*3.5);if(r>.94)sleepUntil=t+2.2+Math.random()*1.5}}
+   else lidT=Math.max(0,lidT-.06);
+   lidH=30*lidT;lid.setAttribute('height',lidH.toFixed(2));lash.setAttribute('opacity',lidT>.92?1:0);
+   requestAnimationFrame(tick)})()}
 const clock=new THREE.Clock();
 function place(list,anchorUp){const boxes=[];for(const l of list){l.obj.getWorldPosition(tmp);tmp.y+=(l.dy||0)*(l.obj.parent&&l.obj.parent.scale?l.obj.parent.scale.x:1);const n=tmp.project(cam);
   if(n.z>1||Math.abs(n.x)>1.05||Math.abs(n.y)>1.05){l.el.style.visibility='hidden';continue}l.el.style.visibility='visible';
