@@ -58,14 +58,14 @@ button.re{color:#fff;background:var(--ink)}
 .vibe:after{content:"";position:absolute;right:14px;bottom:-8px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
 .vibe i{display:inline-block;width:.55em;height:1em;background:var(--ink);vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1) infinite;font-style:normal}
 @keyframes blink{50%{opacity:0}}
-#lady{pointer-events:none;position:fixed;right:-1.5vw;bottom:54px;height:min(58vh,560px);z-index:1;transform-origin:60% 100%;animation:sway 6s ease-in-out infinite;text-decoration:none}
+#lady{pointer-events:none;position:fixed;right:-1.5vw;bottom:54px;height:min(41vh,392px);z-index:1;transform-origin:60% 100%;animation:sway 6s ease-in-out infinite;text-decoration:none}
 #lady img{height:100%;display:block;filter:drop-shadow(6px 6px 0 rgba(20,20,20,.18))}
 #lady span{position:absolute;left:4%;top:30%;transform:rotate(-8deg);background:#141414;color:#b6ff3b;font:800 15px var(--ui);text-transform:uppercase;letter-spacing:.04em;padding:5px 9px 4px;box-shadow:3px 3px 0 #ff2d9b;opacity:0;transition:opacity .2s}
 #lady.hov span{opacity:1}
 #lady.hov,#lady.laugh{animation:laugh .14s linear infinite}
 @keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.4deg)}}
 @keyframes laugh{0%{transform:rotate(-1deg) translateY(0)}50%{transform:rotate(1.5deg) translateY(-3px)}100%{transform:rotate(-1deg)}}
-@media (max-width:700px){#lady{height:30vh;bottom:110px;right:-4vw}}
+@media (max-width:700px){#lady{height:21vh;bottom:110px;right:-4vw}}
 .reveal{z-index:10;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);text-align:center;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none}
 .reveal.on{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 .reveal h2{font-weight:800;font-size:clamp(40px,7vw,96px);line-height:.9;text-transform:uppercase;background:var(--a1);padding:6px 14px 2px;box-shadow:6px 6px 0 var(--ink)}
